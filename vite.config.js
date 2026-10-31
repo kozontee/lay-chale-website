@@ -1,7 +1,9 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
+// LAY CHALÉ — React + Vite
+// Use Vite's default base path (/) for deployment at the domain root.
+// React Router fallback for /reservation must be configured on the hosting service.
 export default defineConfig({
   plugins: [react()],
-})
+});

@@ -64,94 +64,6 @@ footer[id] {
 }
 
 /* =========================================
-   NAVBAR
-========================================= */
-
-.lux-nav {
-  position: relative;
-  z-index: 100;
-  width: 100%;
-  background: rgba(255, 253, 249, 0.98);
-  border-bottom: 1px solid var(--line);
-}
-
-.lux-nav-inner {
-  width: min(94%, var(--content-width));
-  min-height: 96px;
-  margin-inline: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 26px;
-}
-
-.lux-logo {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.lux-logo img {
-  width: clamp(140px, 11vw, 185px);
-  max-height: 84px;
-  object-fit: contain;
-}
-
-.lux-nav-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: clamp(13px, 1.4vw, 27px);
-}
-
-.lux-nav-links > a:not(.gold-shimmer-btn) {
-  position: relative;
-  padding: 12px 0;
-  font-family: var(--serif);
-  font-size: 15px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.lux-nav-links > a:not(.gold-shimmer-btn)::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 100%;
-  bottom: 6px;
-  height: 1px;
-  background: var(--gold);
-  transition: right 0.3s ease;
-}
-
-.lux-nav-links > a:not(.gold-shimmer-btn):hover::after,
-.lux-nav-links > a.current::after {
-  right: 0;
-}
-
-.lux-social {
-  display: flex;
-  align-items: center;
-  gap: 19px;
-  flex-shrink: 0;
-  font-size: 19px;
-}
-
-.lux-social a:hover {
-  color: var(--gold-dark);
-}
-
-.lux-menu-toggle {
-  display: none;
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 28px;
-}
-
-
-/* =========================================
    LAY CHALÉ — NAVBAR REFINEMENT
 ========================================= */
 
@@ -283,99 +195,6 @@ footer[id] {
 
   .lux-social {
     gap: 10px;
-  }
-}
-
-/* Mobile navigation */
-@media (max-width: 850px) {
-  .lux-nav-inner {
-    position: relative;
-    min-height: 76px;
-    gap: 12px;
-  }
-
-  .lux-logo img {
-    width: clamp(120px, 34vw, 155px);
-    max-height: 65px;
-  }
-
-  .lux-menu-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    order: 3;
-    width: 42px;
-    height: 42px;
-    padding: 0;
-    border: 1px solid var(--line);
-    background: var(--paper);
-    color: var(--ink);
-    font-size: 24px;
-    cursor: pointer;
-  }
-
-  .lux-social {
-    margin-left: auto;
-    gap: 10px;
-  }
-
-  .lux-nav-links {
-    position: absolute;
-    top: calc(100% + 1px);
-    right: -3.2%;
-    left: -3.2%;
-    z-index: 1001;
-
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 0;
-
-    max-height: calc(100vh - 76px);
-    overflow-y: auto;
-    padding: 12px 5% 22px;
-
-    background: var(--paper);
-    border-bottom: 1px solid var(--line);
-    box-shadow: 0 16px 28px rgba(30, 24, 16, 0.08);
-
-    visibility: hidden;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-8px);
-
-    transition:
-      opacity 0.25s ease,
-      transform 0.25s ease,
-      visibility 0.25s ease;
-  }
-
-  .lux-nav-links.show {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
-
-  .lux-nav-links > a:not(.gold-shimmer-btn) {
-    display: block;
-    width: 100%;
-    padding: 14px 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 17px;
-    letter-spacing: 1px;
-  }
-
-  .lux-nav-links > a:not(.gold-shimmer-btn)::after {
-    bottom: 7px;
-    max-width: 75px;
-  }
-
-  .lux-nav-links .nav-book {
-    align-self: flex-start;
-    margin-top: 18px;
-    padding: 13px 20px;
   }
 }
 
@@ -662,13 +481,12 @@ footer[id] {
 
 .story-body {
   width: 100%;
-  min-width: 720px;
+  min-width: 0;
   min-height: 440px;
 
   display: grid;
-  grid-template-columns:
-    minmax(0, 70%)
-    minmax(0, 70%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 30px;
 }
 
 .story-text {
@@ -804,9 +622,8 @@ footer[id] {
 .editorial-food-grid {
   width: 100%;
   display: grid;
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .food-card {
@@ -1073,63 +890,6 @@ footer[id] {
   background: rgba(255, 253, 249, 0.98);
   border: 1px solid #e7dfd1;
   box-shadow: 0 14px 45px rgba(55, 38, 16, 0.07);
-}
-
-.reservation-progress {
-  display: grid;
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-  gap: 15px;
-  padding: 23px 30px;
-  border-bottom: 1px solid var(--line);
-}
-
-.progress-item {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-
-  color: #8c8780;
-  font-family: var(--serif);
-  font-size: 16px;
-  white-space: nowrap;
-}
-
-.progress-item::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: #e2c79e;
-}
-
-.progress-item:last-child::after {
-  display: none;
-}
-
-.progress-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  width: 32px;
-  height: 32px;
-  border: 1px solid #cbb99e;
-  border-radius: 50%;
-
-  color: #4c4030;
-  font-family: var(--serif);
-  font-size: 16px;
-}
-
-.progress-item.active .progress-circle {
-  border-color: var(--gold);
-  background: linear-gradient(
-    135deg,
-    #f0d6a3,
-    #c79750
-  );
-  color: #22180e;
 }
 
 .reservation-columns {
@@ -1884,9 +1644,7 @@ footer[id] {
   }
 
   .story-body {
-    grid-template-columns:
-      minmax(0, 48%)
-      minmax(0, 52%);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .story-text h2 {
@@ -2107,27 +1865,13 @@ footer[id] {
     margin-top: -22px;
   }
 
-  .reservation-progress {
-    gap: 4px;
-    padding: 15px 8px;
-  }
 
-  .progress-item {
-    flex-direction: column;
-    gap: 7px;
-    text-align: center;
-    font-size: 11px;
-    white-space: normal;
-  }
 
-  .progress-item::after {
-    display: none;
-  }
 
-  .progress-circle {
-    width: 29px;
-    height: 29px;
-  }
+
+
+
+
 
   .reservation-columns {
     grid-template-columns: minmax(0, 1fr);
@@ -2551,15 +2295,6 @@ footer[id] {
    FINAL OVERRIDES — CORMORANT INFANT + GALLERY
 ========================================= */
 
-html,
-body,
-button,
-input,
-textarea,
-select {
-  font-family: "Cormorant Infant", Georgia, serif;
-}
-
 .lux-site,
 .lux-site p,
 .lux-site a,
@@ -2681,5 +2416,154 @@ select {
     gap: 5px;
     padding: 8px 6px;
     font-size: 10px;
+  }
+}
+
+
+/* =========================================
+   2026-10-31 — REFINED LAYOUT & SINGLE-PAGE RESERVATION
+   Keep the existing visual style while matching current JSX.
+========================================= */
+
+/* Story container never exceeds available content width. */
+.story-layout,
+.story-layout .story-body,
+.story-layout .story-text,
+.story-layout .story-visual {
+  min-width: 0;
+}
+.story-layout .story-body {
+  max-width: 100%;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(18px, 3vw, 40px);
+}
+.story-layout .story-visual {
+  width: 100%;
+}
+
+/* Three food categories, evenly sized. */
+.editorial-food-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* One-page booking form: introductory heading, 3 booking columns,
+   then contact details and a single LINE button. */
+.reservation-intro {
+  max-width: none;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.reservation-intro > h2 {
+  margin: 10px 0 12px;
+}
+.reservation-intro > p {
+  max-width: 780px;
+  margin-bottom: 0;
+}
+.reservation-panel .reservation-columns {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, .9fr);
+}
+.reservation-panel form > .reservation-stage {
+  max-width: 900px;
+  margin-inline: auto;
+  border-top: 1px solid var(--line);
+  padding-top: 32px;
+}
+.reservation-panel .reservation-next {
+  display: flex;
+  margin: 28px auto 0;
+  max-width: 480px;
+}
+.reservation-panel .copy-feedback[role="alert"] {
+  color: #a23d32;
+  font-size: 16px;
+}
+
+/* Visible keyboard focus for navigation and form interactions. */
+.lux-site a:focus-visible,
+.lux-site button:focus-visible,
+.lux-site input:focus-visible,
+.lux-site textarea:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 3px;
+}
+
+/* Single mobile-navbar breakpoint: 1000px.
+   Corresponding show/hide behavior is in the existing @media (max-width:1000px). */
+@media (max-width: 1000px) {
+  .lux-nav-inner {
+    position: relative;
+  }
+  .lux-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    order: 3;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 24px;
+  }
+  .lux-nav-links {
+    z-index: 1001;
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
+  }
+  .reservation-panel .reservation-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .reservation-panel .reservation-column:nth-child(2) {
+    border-right: 0;
+  }
+  .reservation-panel .reservation-column:nth-child(3) {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    border-right: 0;
+  }
+}
+@media (max-width: 700px) {
+  .story-layout .story-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .editorial-food-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reservation-panel .reservation-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reservation-panel .reservation-column,
+  .reservation-panel .reservation-column:nth-child(2),
+  .reservation-panel .reservation-column:nth-child(3) {
+    grid-column: auto;
+    border-right: 0;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .reservation-panel .reservation-column:last-child {
+    border-bottom: 0;
+  }
+  .reservation-panel .reservation-intro {
+    padding: 30px 20px 22px;
+  }
+  .reservation-panel form > .reservation-stage {
+    padding: 28px 20px 36px;
+  }
+  .reservation-panel .reservation-next {
+    width: 100%;
+  }
+  .lux-nav-links {
+    left: 0;
+    right: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-slider .editorial-gallery,
+  .reservation-photo-strip {
+    scroll-behavior: auto;
   }
 }

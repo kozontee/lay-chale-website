@@ -1,46 +1,33 @@
-
+/* LAY CHALÉ — GLOBAL STYLES */
 @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap");
 
 :root {
-  font-family: "DM Sans", sans-serif;
-  color: #171717;
-  background: #faf9f5;
+  --font-body: "DM Sans", sans-serif;
+  --font-heading: "Cormorant Garamond", serif;
+  --color-text: #171717;
+  --color-background: #faf9f5;
+  --color-gold: #e7bf7e;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-background);
   font-synthesis: none;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-  scroll-padding-top: 95px;
-}
-
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 95px; }
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background-color: var(--color-background);
 }
-
-button,
-input,
-textarea {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-a {
-  text-decoration: none;
-}
-
-img {
-  max-width: 100%;
-}
-
-::selection {
-  color: #171717;
-  background: #e7bf7e;
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+a { text-decoration: none; }
+img { max-width: 100%; height: auto; }
+::selection { color: var(--color-text); background-color: var(--color-gold); }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }

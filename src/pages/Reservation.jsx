@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 
-const LINE_URL = "https://line.me/R/ti/p/@laychale";
+const LINE_OA_ID = "@laychale";
 
 const diningSessions = [
   {
@@ -64,12 +64,37 @@ function toDateString(date) {
   return `${year}-${month}-${day}`;
 }
 
+// Module-level snapshot is outside React's render phase.
+const INITIAL_TODAY = toDateString(new Date());
+
+function useLocalToday() {
+  const [today, setToday] = useState(INITIAL_TODAY);
+
+  useEffect(() => {
+    function refreshToday() {
+      const current = toDateString(new Date());
+      setToday((previous) => previous === current ? previous : current);
+    }
+    const timer = window.setInterval(refreshToday, 60_000);
+    window.addEventListener("focus", refreshToday);
+    document.addEventListener("visibilitychange", refreshToday);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshToday);
+      document.removeEventListener("visibilitychange", refreshToday);
+    };
+  }, []);
+
+  return today;
+}
+
 /* =========================================
    CALENDAR
 ========================================= */
 
-function BookingCalendar({ value, onChange }) {
-  const today = new Date();
+function BookingCalendar({ value, onChange, todayString }) {
+  const [todayYear, todayMonth, todayDay] = todayString.split("-").map(Number);
+  const today = new Date(todayYear, todayMonth - 1, todayDay);
 
   const [visibleMonth, setVisibleMonth] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
@@ -287,6 +312,7 @@ function ReservationPhotoStrip() {
 ========================================= */
 
 export default function Reservation() {
+  const todayString = useLocalToday();
   const [date, setDate] = useState("");
   const [sessionId, setSessionId] = useState("golden");
   const [guests, setGuests] = useState("2");
@@ -294,29 +320,20 @@ export default function Reservation() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [stage, setStage] = useState(1);
-  const [copied, setCopied] = useState(false);
-  const [copyError, setCopyError] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const selectedSession = diningSessions.find(
     (item) => item.id === sessionId
   );
-
   const guestNumber = Number(guests);
-  const guestsValid =
-    Number.isSafeInteger(guestNumber) && guestNumber >= 1;
+  const guestsValid = Number.isSafeInteger(guestNumber) && guestNumber >= 1;
 
   const dateValid = (() => {
     if (!date) return false;
-
     const [year, month, day] = date.split("-").map(Number);
     const selected = new Date(year, month - 1, day);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     return (
-      selected >= today &&
+      date >= todayString &&
       selected.getDay() !== 0 &&
       toDateString(selected) === date
     );
@@ -327,529 +344,271 @@ export default function Reservation() {
     "",
     `Name: ${name.trim()}`,
     `Phone: ${phone.trim()}`,
-    `Email: ${email.trim() || "Not provided"}`,
+    `Guests: ${guests}`,
     `Date: ${date}`,
     `Dining session: ${selectedSession.title}`,
     `Session hours: ${selectedSession.time}`,
-    `Guests: ${guests}`,
+    `Email: ${email.trim() || "Not provided"}`,
     `Special requests: ${request.trim() || "None"}`,
     "",
-    "Please confirm the table and arrival time.",
+    "Please confirm my reservation request. Thank you!",
   ].join("\n");
 
-  function nextFromSelection(event) {
+  // LINE's official URL scheme pre-fills a message in the shop's OA chat.
+  // Customers must still tap Send inside LINE.
+  const lineMessageUrl =
+    `https://line.me/R/oaMessage/${encodeURIComponent(LINE_OA_ID)}/?` +
+    encodeURIComponent(message);
+
+  function handleReservation(event) {
     event.preventDefault();
+    setFormError("");
 
     if (!dateValid) {
-      window.alert("Please select a valid reservation date.");
+      setFormError("Please choose a valid date. Sundays are closed.");
       return;
     }
-
-    if (!guestsValid) {
-      window.alert("Please enter a valid number of guests.");
+    if (!selectedSession || !guestsValid) {
+      setFormError("Please select a session and enter a valid guest count.");
       return;
     }
-
-    setStage(2);
-  }
-
-  function nextFromDetails(event) {
-    event.preventDefault();
-
     if (!name.trim() || !phone.trim()) {
-      window.alert("Please enter your name and phone number.");
+      setFormError("Please enter your name and phone number.");
       return;
     }
 
-    setStage(3);
-    setCopied(false);
-    setCopyError(false);
-  }
-
-  async function copyMessage() {
-    try {
-      await navigator.clipboard.writeText(message);
-      setCopied(true);
-      setCopyError(false);
-    } catch {
-      setCopied(false);
-      setCopyError(true);
-    }
+    // Navigate in the same tab for consistent mobile app deep linking.
+    window.location.assign(lineMessageUrl);
   }
 
   return (
     <div className="lux-site reservation-page">
       <Navbar />
 
-      {/* RESERVATION HERO */}
+      {/* HERO */}
       <section className="reservation-hero">
         <div className="reservation-hero-image" />
-
         <div className="reservation-hero-copy">
           <span className="lux-kicker">RESERVATION</span>
-
           <h1>
-            A TABLE
-            <br />
-            FOR PRECIOUS
-            <br />
-            MOMENTS.
+            A TABLE<br />FOR PRECIOUS<br />MOMENTS.
           </h1>
-
           <div className="small-gold-line" />
-
-          <p>
-            Good food. Great company.
-            Precious moments.
-          </p>
-
+          <p>Good food. Great company. Precious moments.</p>
           <span className="hero-cuisines">
             THAI · CHINESE · ITALIAN CUISINE
           </span>
         </div>
       </section>
 
-      {/* BOOKING PANEL */}
+      {/* ALL RESERVATION FIELDS IN ONE FORM */}
       <section className="reservation-main">
         <div className="reservation-panel">
-          <div className="reservation-progress">
-            {[
-              "SELECT DATE",
-              "CHOOSE SESSION",
-              "YOUR DETAILS",
-              "REVIEW & SEND",
-            ].map((title, index) => {
-              const number = index + 1;
-              const active = stage === 1
-                ? number <= 2
-                : stage === 2
-                ? number <= 3
-                : true;
-
-              return (
-                <div
-                  className={`progress-item ${
-                    active ? "active" : ""
-                  }`}
-                  key={title}
-                >
-                  <span className="progress-circle">
-                    {number}
-                  </span>
-                  <span>{title}</span>
-                </div>
-              );
-            })}
+          <div className="reservation-stage reservation-intro">
+            <span className="lux-kicker">BOOK A TABLE</span>
+            <h2>LET'S MAKE MEMORIES.</h2>
+            <p>
+              Fill in your reservation details below, then continue to
+              LINE to send your request to Lay Chalé.
+            </p>
           </div>
 
-          {/* STEP 1 */}
-          {stage === 1 && (
-            <form onSubmit={nextFromSelection}>
-              <div className="reservation-columns">
-                <div className="reservation-column">
-                  <h2>SELECT DATE</h2>
-
-                  <BookingCalendar
-                    value={date}
-                    onChange={setDate}
-                  />
-                </div>
-
-                <div className="reservation-column">
-                  <h2>CHOOSE DINING SESSION</h2>
-
-                  <div className="lux-session-list">
-                    {diningSessions.map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className={`lux-session-choice ${
-                          sessionId === item.id ? "selected" : ""
-                        }`}
-                        onClick={() => setSessionId(item.id)}
-                        aria-pressed={sessionId === item.id}
-                      >
-                        <span className="session-radio">
-                          <span />
-                        </span>
-
-                        <img src={item.image} alt="" />
-
-                        <span className="session-choice-copy">
-                          <small>{item.time}</small>
-                          <strong>{item.title}</strong>
-                          <span>{item.description}</span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <p className="session-disclaimer">
-                    Your preferred session is a request.
-                    The restaurant must confirm availability.
-                  </p>
-                </div>
-
-                <div className="reservation-column">
-                  <h2>NUMBER OF GUESTS</h2>
-
-                  <div className="lux-guest-row">
-                    <i className="bi bi-people" />
-
-                    <div className="lux-guest-counter">
-                      <button
-                        type="button"
-                        aria-label="Decrease guests"
-                        disabled={guestNumber <= 1}
-                        onClick={() =>
-                          setGuests(
-                            String(Math.max(1, (guestNumber || 1) - 1))
-                          )
-                        }
-                      >
-                        <i className="bi bi-dash" />
-                      </button>
-
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={guests}
-                        aria-label="Number of guests"
-                        onChange={(event) =>
-                          setGuests(event.target.value)
-                        }
-                        onBlur={() => {
-                          if (!guestsValid) setGuests("1");
-                        }}
-                        required
-                      />
-
-                      <button
-                        type="button"
-                        aria-label="Increase guests"
-                        onClick={() =>
-                          setGuests(
-                            String(Math.max(0, guestNumber || 0) + 1)
-                          )
-                        }
-                      >
-                        <i className="bi bi-plus" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {guestNumber >= 10 && (
-                    <p className="group-notice">
-                      For larger groups, our team will confirm
-                      suitable arrangements.
-                    </p>
-                  )}
-
-                  <h2 className="request-label">
-                    SPECIAL REQUEST (OPTIONAL)
-                  </h2>
-
-                  <textarea
-                    className="lux-request-input"
-                    rows="4"
-                    value={request}
-                    onChange={(event) =>
-                      setRequest(event.target.value)
-                    }
-                    placeholder="Birthday, anniversary, allergies, seating preference..."
-                  />
-
-                  <button
-                    className="gold-shimmer-btn reservation-next"
-                    type="submit"
-                  >
-                    <span>NEXT</span>
-                    <i className="bi bi-arrow-right" />
-                  </button>
-
-                  <p className="reservation-hint">
-                    Your table is not confirmed until the
-                    restaurant confirms your request.
-                  </p>
-                </div>
+          <form onSubmit={handleReservation}>
+            <div className="reservation-columns">
+              <div className="reservation-column">
+                <h2>SELECT DATE</h2>
+                <BookingCalendar value={date} onChange={setDate} todayString={todayString} />
               </div>
-            </form>
-          )}
 
-          {/* STEP 2 */}
-          {stage === 2 && (
+              <div className="reservation-column">
+                <h2>CHOOSE DINING SESSION</h2>
+                <div className="lux-session-list">
+                  {diningSessions.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`lux-session-choice ${
+                        sessionId === item.id ? "selected" : ""
+                      }`}
+                      onClick={() => setSessionId(item.id)}
+                      aria-pressed={sessionId === item.id}
+                    >
+                      <span className="session-radio"><span /></span>
+                      <img src={item.image} alt="" />
+                      <span className="session-choice-copy">
+                        <small>{item.time}</small>
+                        <strong>{item.title}</strong>
+                        <span>{item.description}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <p className="session-disclaimer">
+                  Your preferred session is a request. The restaurant
+                  must confirm availability.
+                </p>
+              </div>
+
+              <div className="reservation-column">
+                <h2>NUMBER OF GUESTS</h2>
+                <div className="lux-guest-row">
+                  <i className="bi bi-people" />
+                  <div className="lux-guest-counter">
+                    <button
+                      type="button"
+                      aria-label="Decrease guests"
+                      disabled={guestNumber <= 1}
+                      onClick={() => setGuests(
+                        String(Math.max(1, (guestNumber || 1) - 1))
+                      )}
+                    >
+                      <i className="bi bi-dash" />
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={guests}
+                      aria-label="Number of guests"
+                      onChange={(event) => setGuests(event.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      aria-label="Increase guests"
+                      onClick={() => setGuests(
+                        String(Math.max(0, guestNumber || 0) + 1)
+                      )}
+                    >
+                      <i className="bi bi-plus" />
+                    </button>
+                  </div>
+                </div>
+                {guestNumber >= 10 && (
+                  <p className="group-notice">
+                    For larger groups, our team will confirm suitable arrangements.
+                  </p>
+                )}
+                <h2 className="request-label">SPECIAL REQUEST (OPTIONAL)</h2>
+                <textarea
+                  className="lux-request-input"
+                  rows="4"
+                  value={request}
+                  onChange={(event) => setRequest(event.target.value)}
+                  placeholder="Birthday, anniversary, allergies, seating preference..."
+                />
+              </div>
+            </div>
+
             <div className="reservation-stage">
               <span className="lux-kicker">YOUR DETAILS</span>
-
-              <h2>LET'S GET ACQUAINTED.</h2>
-
-              <p>
-                Tell us how to contact you about your
-                reservation request.
-              </p>
-
-              <form
-                className="details-form"
-                onSubmit={nextFromDetails}
-              >
+              <h2>HOW CAN WE REACH YOU?</h2>
+              <div className="details-form">
                 <div className="details-grid">
                   <label>
                     FULL NAME *
                     <input
                       type="text"
                       value={name}
-                      onChange={(event) =>
-                        setName(event.target.value)
-                      }
+                      onChange={(event) => setName(event.target.value)}
                       placeholder="Your full name"
                       autoComplete="name"
                       required
                     />
                   </label>
-
                   <label>
                     PHONE NUMBER *
                     <input
                       type="tel"
                       value={phone}
-                      onChange={(event) =>
-                        setPhone(event.target.value)
-                      }
+                      onChange={(event) => setPhone(event.target.value)}
                       placeholder="Your phone number"
                       autoComplete="tel"
                       required
                     />
                   </label>
-
                   <label className="details-wide">
                     EMAIL (OPTIONAL)
                     <input
                       type="email"
                       value={email}
-                      onChange={(event) =>
-                        setEmail(event.target.value)
-                      }
+                      onChange={(event) => setEmail(event.target.value)}
                       placeholder="you@example.com"
                       autoComplete="email"
                     />
                   </label>
                 </div>
-
-                <div className="stage-buttons">
-                  <button
-                    type="button"
-                    className="outline-lux-btn"
-                    onClick={() => setStage(1)}
-                  >
-                    ← BACK
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="gold-shimmer-btn"
-                  >
-                    <span>REVIEW REQUEST</span>
-                    <i className="bi bi-arrow-right" />
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* STEP 3 */}
-          {stage === 3 && (
-            <div className="reservation-stage">
-              <span className="lux-kicker">REVIEW & SEND</span>
-
-              <h2>ONE LAST LOOK.</h2>
-
-              <p>
-                Review your details before contacting
-                Lay Chalé on LINE.
-              </p>
-
-              <div className="review-card">
-                <div>
-                  <span>NAME</span>
-                  <strong>{name}</strong>
-                </div>
-
-                <div>
-                  <span>PHONE</span>
-                  <strong>{phone}</strong>
-                </div>
-
-                <div>
-                  <span>EMAIL</span>
-                  <strong>{email || "Not provided"}</strong>
-                </div>
-
-                <div>
-                  <span>DATE</span>
-                  <strong>{date}</strong>
-                </div>
-
-                <div>
-                  <span>DINING SESSION</span>
-                  <strong>
-                    {selectedSession.title} · {selectedSession.time}
-                  </strong>
-                </div>
-
-                <div>
-                  <span>GUESTS</span>
-                  <strong>{guests}</strong>
-                </div>
-
-                <div>
-                  <span>SPECIAL REQUEST</span>
-                  <strong>{request || "None"}</strong>
-                </div>
               </div>
 
-              <div className="stage-buttons">
-                <button
-                  type="button"
-                  className="outline-lux-btn"
-                  onClick={() => setStage(2)}
-                >
-                  ← EDIT DETAILS
-                </button>
-
-                <button
-                  type="button"
-                  className="gold-shimmer-btn"
-                  onClick={copyMessage}
-                >
-                  <span>
-                    {copied
-                      ? "DETAILS COPIED"
-                      : "COPY RESERVATION DETAILS"}
-                  </span>
-                  <i className="bi bi-copy" />
-                </button>
-              </div>
-
-              {copied && (
-                <p className="copy-feedback">
-                  <i className="bi bi-check-circle" />
-                  {" "}Copied successfully. Open LINE, paste
-                  the details, and press Send.
-                </p>
+              {formError && (
+                <p role="alert" className="copy-feedback">{formError}</p>
               )}
 
-              {copyError && (
-                <p className="copy-feedback">
-                  Automatic copying is unavailable.
-                  Please select and copy the text below.
-                </p>
-              )}
-
-              <details className="manual-message">
-                <summary>View reservation message</summary>
-                <pre>{message}</pre>
-              </details>
-
-              <a
-                className="line-action"
-                href={LINE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <button type="submit" className="gold-shimmer-btn reservation-next">
+                <span>CONTINUE TO LINE</span>
                 <i className="bi bi-chat-dots" />
-                OPEN LAY CHALÉ LINE ↗
-              </a>
-
+              </button>
               <p className="reservation-hint">
-                This sends a request only. Your table is
-                not reserved until our team confirms it.
+                LINE will open with your booking details ready to send.
+                Please press Send in LINE. Your table is not confirmed
+                until the restaurant replies and confirms availability.
               </p>
             </div>
-          )}
+          </form>
         </div>
 
         {/* FEATURES */}
         <div className="reservation-features">
           <div>
             <i className="bi bi-fork-knife" />
-            <span>
-              <strong>THAI · CHINESE · ITALIAN</strong>
-              <small>Thoughtfully crafted cuisine</small>
-            </span>
+            <span><strong>THAI · CHINESE · ITALIAN</strong>
+              <small>Thoughtfully crafted cuisine</small></span>
           </div>
-
           <div>
             <i className="bi bi-flower1" />
-            <span>
-              <strong>BOTANICAL ATMOSPHERE</strong>
-              <small>A beautiful place to gather</small>
-            </span>
+            <span><strong>BOTANICAL ATMOSPHERE</strong>
+              <small>A beautiful place to gather</small></span>
           </div>
-
           <div>
             <i className="bi bi-people" />
-            <span>
-              <strong>EVERY OCCASION</strong>
-              <small>Family, friends and celebrations</small>
-            </span>
+            <span><strong>EVERY OCCASION</strong>
+              <small>Family, friends and celebrations</small></span>
           </div>
-
           <div>
             <i className="bi bi-clock" />
-            <span>
-              <strong>DINING SESSIONS</strong>
-              <small>Monday to Saturday</small>
-            </span>
+            <span><strong>DINING SESSIONS</strong>
+              <small>Monday to Saturday</small></span>
           </div>
         </div>
       </section>
 
-      {/* AUTO-SLIDING PHOTO GALLERY */}
       <ReservationPhotoStrip />
 
       {/* FOOTER */}
       <footer className="reservation-footer">
         <div>
-          <Link to="/" className="reservation-footer-name">
-            LAY CHALÉ
-          </Link>
-
-          <p>
-            Good food. Great company.
-            <br />
-            Beautiful moments.
-          </p>
+          <Link to="/" className="reservation-footer-name">LAY CHALÉ</Link>
+          <p>Good food. Great company.<br />Beautiful moments.</p>
         </div>
-
         <div>
           <i className="bi bi-clock" />
           <span>
-            Mon–Sat 11:00–14:00
-            <br />
-            16:30–22:30 · Sunday closed
+            Mon–Sat 11:00–14:00<br />16:30–22:30 · Sunday closed
           </span>
         </div>
-
         <div>
           <a href="tel:0660916464">
-            <i className="bi bi-telephone" />
-            066-091-6464
+            <i className="bi bi-telephone" /> 066-091-6464
           </a>
-
           <a
-            href={LINE_URL}
+            href={`https://line.me/R/ti/p/${encodeURIComponent(LINE_OA_ID)}`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            <i className="bi bi-chat-dots" />
-            LINE @laychale
+            <i className="bi bi-chat-dots" /> LINE @laychale
           </a>
         </div>
-
-        <Link to="/" className="back-home">
-          ← BACK TO HOME
-        </Link>
+        <Link to="/" className="back-home">← BACK TO HOME</Link>
       </footer>
     </div>
   );

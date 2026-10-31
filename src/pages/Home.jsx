@@ -3,6 +3,8 @@ import { useRef } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar.jsx";
 
+const COPYRIGHT_YEAR = new Date().getFullYear();
+
 const MENU_URL =
   "https://online.anyflip.com/torpk/wewx/mobile/index.html";
 
@@ -144,12 +146,12 @@ export default function Home() {
               Open Monday – Saturday.
             </p>
 
-            <Link
-              to="/reservation"
+            <a
+              href="#gallery"
               className="editorial-link"
             >
               OUR PHILOSOPHY <span>→</span>
-            </Link>
+            </a>
           </div>
 
           {/* RIGHT: STORY IMAGE */}
@@ -364,7 +366,7 @@ export default function Home() {
           </p>
 
           <p>
-            © {new Date().getFullYear()} Lay Chalé.
+            © {COPYRIGHT_YEAR} Lay Chalé.
             All rights reserved.
           </p>
         </div>
